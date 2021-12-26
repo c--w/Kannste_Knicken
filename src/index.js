@@ -1,9 +1,15 @@
-var http = require("http");
+const express = require("express");
+const app = express();
+const exphbs = require("express-handlebars");
+const hbs = exphbs.create();
 
-//create a server object:
-http
-  .createServer(function(req, res) {
-    res.write("Hello World!"); //write a response to the client
-    res.end(); //end the response
-  })
-  .listen(8080); //the server object listens on port 8080
+app.engine("handlebars", hbs.engine);
+app.set("view engine", "handlebars");
+
+app.set("views", "./views");
+
+app.get("/", function (req, res) {
+  res.render("home", { layout: false });
+});
+
+app.listen(8080);

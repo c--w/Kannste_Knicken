@@ -6,7 +6,10 @@
   "scripts": {
     "start": "nodemon src/index.js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "express": "4.17.2",
+    "express-handlebars": "6.0.2"
+  },
   "devDependencies": {
     "nodemon": "1.18.4"
   },
