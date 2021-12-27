@@ -25,17 +25,17 @@ var start_points = [
 ];
 
 var start_points_small = [
-  [0, 0],
-  [14, 0],
-  [0, 14],
-  [14, 14]
+  [1, 3],
+  [12, 3],
+  [2, 11],
+  [11, 12]
 ];
 
 var start_points_big = [
-  [0, 0],
-  [14, 0],
-  [0, 14],
-  [14, 14]
+  [3, 5],
+  [10, 5],
+  [4, 9],
+  [9, 10]
 ];
 
 var bonuses = [
@@ -52,17 +52,17 @@ var bonuses = [
 var stars_small = [
   [3, 2, 0],
   [12, 1, 0],
-  [7, 7, 1],
   [3, 13, 0],
-  [13, 11, 0]
+  [13, 11, 0],
+  [7, 7, 1]
 ];
 
 var stars_big = [
-  [4, 3, 0],
-  [11, 2, 0],
-  [7, 7, 1],
-  [4, 12, 0],
-  [12, 2, 0]
+  [5, 4, 0],
+  [10, 3, 0],
+  [5, 11, 0],
+  [11, 9, 0],
+  [7, 7, 1]
 ];
 
 var folds_small = [
@@ -131,6 +131,7 @@ function cubesButtonClicked(e) {
 function fold(event) {
   var button = $(event.target);
   var quadrant = button.data("quadrant");
+  $("button[quadrant=" + quadrant + "]").remove();
   var type = button.data("type");
   fold2(quadrant, type);
 }
@@ -162,23 +163,40 @@ function fold2(quadrant, type) {
       break;
   }
   if (type == "1") {
-    var max = 3;
+    var max = 4;
+    var star = stars_small[quadrant];
+    var start = start_points_small[quadrant];
   } else {
-    var max = 5;
+    var max = 6;
+    var star = stars_big[quadrant];
+    var start = start_points_big[quadrant];
   }
   var max_x = pos[0] + mx * max;
   var max_y = pos[1] + my * max;
   for (var i = pos[1]; i != max_y; i += my) {
     for (var j = pos[0]; j != max_x; j += mx) {
       var td = $(getTd(j, i));
-      if (max_y - i + max_x - j < max) {
+      if ((i - pos[1]) * my + (j - pos[0]) * mx < max) {
         td.css("background-color", "transparent");
       } else {
-        td.css("background-color", "gold");
+        td.css("background-color", "");
       }
+      td.find("span").remove();
     }
   }
+  star[2] = 1;
+  addContent(star[0], star[1], "⭐");
+  var old_start = start_points[quadrant];
+  var td_old = $(getTd(old_start[0], old_start[1]));
+  var td_new = $(getTd(start[0], start[1]));
+  td_old.addClass("visited");
+  td_old.off("click");
+  td_old.removeClass("start");
+  makeStart(td_new, quadrant);
+  old_start[0] = start[0];
+  old_start[1] = start[1];
 }
+
 function addFolding(x, y, val) {
   var button = $(
     '<button class="corner btn btn-xs btn-primary" onclick="fold(event)">x</button>'
@@ -186,6 +204,7 @@ function addFolding(x, y, val) {
   button.data("type", val);
   var quadrant = getQuadrant(x, y);
   button.data("quadrant", quadrant);
+  button.attr("quadrant", quadrant);
   switch (quadrant) {
     case 0:
       button.addClass("bottom-right");
@@ -292,11 +311,15 @@ function addStartPoints() {
   start_points.forEach(function (a, i) {
     if (g_selected_amount != 0) {
       var td = $(getTd(a[0], a[1]));
-      td.addClass("start");
-      td.on("click", startSelected);
-      td.data("i", i);
+      makeStart(td, i);
     }
   });
+}
+
+function makeStart(td, quadrant) {
+  td.addClass("start");
+  td.on("click", startSelected);
+  td.data("i", quadrant);
 }
 
 var g_selected_start;
@@ -399,10 +422,7 @@ function move2(start, direction, amount) {
     td.addClass("visited");
     checkContents(td);
   }
-
-  td.addClass("start");
-  td.on("click", startSelected);
-  td.data("i", start);
+  makeStart(td, start);
 
   $(g_selected_amount_button).remove();
   $("#direction").hide(0);
