@@ -114,6 +114,31 @@ function cubesButtonClicked(e) {
   }
 }
 
+function addFolding(x, y, val) {
+  var button = $('<button class="corner btn btn-xs btn-primary">x</button>');
+  button.data("type", val);
+  var quadrant = getQuadrant(x, y);
+  switch (quadrant) {
+    case 0:
+      button.addClass("bottom-right");
+      break;
+    case 1:
+      button.addClass("bottom-left");
+      break;
+    case 2:
+      button.addClass("top-right");
+      break;
+    case 3:
+      button.addClass("top-left");
+      break;
+
+    default:
+      break;
+  }
+  var td = getTd(x, y);
+  $(td).append(button);
+}
+
 var tbody = $(".grid tbody");
 for (var i = 0; i < 15; i++) {
   var tr = $("<tr>");
@@ -123,6 +148,22 @@ for (var i = 0; i < 15; i++) {
     td.data("x", j);
     td.data("y", i);
     tr.append(td);
+    if (
+      (j == 3 && i == 3) ||
+      (j == 11 && i == 3) ||
+      (j == 3 && i == 11) ||
+      (j == 11 && i == 3)
+    ) {
+      addFolding(j, i, 1);
+    }
+    if (
+      (j == 5 && i == 5) ||
+      (j == 9 && i == 5) ||
+      (j == 5 && i == 9) ||
+      (j == 9 && i == 9)
+    ) {
+      addFolding(j, i, 2);
+    }
   }
 }
 var g_selected_amount;
