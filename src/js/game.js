@@ -65,6 +65,20 @@ var stars_big = [
   [12, 2, 0]
 ];
 
+var folds_small = [
+  [3, 3],
+  [11, 3],
+  [3, 11],
+  [11, 11]
+];
+
+var folds_big = [
+  [5, 5],
+  [9, 5],
+  [5, 9],
+  [9, 9]
+];
+
 var smiley_done = [0, 0, 0, 0];
 var g_stars = 0;
 
@@ -114,10 +128,64 @@ function cubesButtonClicked(e) {
   }
 }
 
+function fold(event) {
+  var button = $(event.target);
+  var quadrant = button.data("quadrant");
+  var type = button.data("type");
+  fold2(quadrant, type);
+}
+
+function fold2(quadrant, type) {
+  switch (quadrant) {
+    case 0:
+      var pos = [0, 0];
+      var mx = 1;
+      var my = 1;
+      break;
+    case 1:
+      var pos = [14, 0];
+      var mx = -1;
+      var my = 1;
+      break;
+    case 2:
+      var pos = [0, 14];
+      var mx = 1;
+      var my = -1;
+      break;
+    case 3:
+      var pos = [14, 14];
+      var mx = -1;
+      var my = -1;
+      break;
+
+    default:
+      break;
+  }
+  if (type == "1") {
+    var max = 3;
+  } else {
+    var max = 5;
+  }
+  var max_x = pos[0] + mx * max;
+  var max_y = pos[1] + my * max;
+  for (var i = pos[1]; i != max_y; i += my) {
+    for (var j = pos[0]; j != max_x; j += mx) {
+      var td = $(getTd(j, i));
+      if (max_y - i + max_x - j < max) {
+        td.css("background-color", "transparent");
+      } else {
+        td.css("background-color", "gold");
+      }
+    }
+  }
+}
 function addFolding(x, y, val) {
-  var button = $('<button class="corner btn btn-xs btn-primary">x</button>');
+  var button = $(
+    '<button class="corner btn btn-xs btn-primary" onclick="fold(event)">x</button>'
+  );
   button.data("type", val);
   var quadrant = getQuadrant(x, y);
+  button.data("quadrant", quadrant);
   switch (quadrant) {
     case 0:
       button.addClass("bottom-right");
@@ -139,6 +207,16 @@ function addFolding(x, y, val) {
   $(td).append(button);
 }
 
+function showFold(quadrant, val) {
+  if (val == 1) {
+    var pos = folds_small[quadrant];
+  } else {
+    var pos = folds_big[quadrant];
+  }
+  var td = $(getTd(pos[0], pos[1]));
+  td.find("button").show();
+}
+
 var tbody = $(".grid tbody");
 for (var i = 0; i < 15; i++) {
   var tr = $("<tr>");
@@ -152,7 +230,7 @@ for (var i = 0; i < 15; i++) {
       (j == 3 && i == 3) ||
       (j == 11 && i == 3) ||
       (j == 3 && i == 11) ||
-      (j == 11 && i == 3)
+      (j == 11 && i == 11)
     ) {
       addFolding(j, i, 1);
     }
@@ -201,7 +279,7 @@ function getTd(x, y) {
 
 function addContent(x, y, text) {
   var td = getTd(x, y);
-  td.innerHTML = text;
+  $(td).append($("<span>" + text + "</span>"));
 }
 
 function addSmilies() {
@@ -343,16 +421,21 @@ function add_dice_buttons() {
 
 var quadrant_enabled = [0, 0, 0, 0];
 function checkContents(td) {
-  if (td[0].innerHTML === "🙂") {
-    td[0].innerHTML = "😃";
+  if (td[0].innerHTML.includes("🙂")) {
+    td.find("span")[0].innerHTML = "😃";
     var quadrant = getQuadrant(td.data("x"), td.data("y"));
     smiley_done[quadrant]++;
-    if (smiley_done[quadrant] === 3) quadrant_enabled[quadrant] = 1;
-    else if (smiley_done[quadrant] > 3) quadrant_enabled[quadrant] = 2;
-  } else if (td[0].innerHTML === "⭐") {
+    if (smiley_done[quadrant] === 3) {
+      quadrant_enabled[quadrant] = 1;
+      showFold(quadrant, 1);
+    } else if (smiley_done[quadrant] > 3) {
+      quadrant_enabled[quadrant] = 2;
+      showFold(quadrant, 2);
+    }
+  } else if (td[0].innerHTML.includes("⭐")) {
     g_stars++;
-    td[0].innerHTML = "☆";
-  } else if (td[0].innerHTML.trim().startsWith("<i")) {
+    td.find("span")[0].innerHTML = "☆";
+  } else if (td.find("i").length) {
     var i = td.find("i");
     if (!i.data("used")) {
       i.data("used", true);
