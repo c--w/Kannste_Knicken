@@ -100,17 +100,13 @@ function cubesButtonClicked(e) {
   cubes.empty();
   var tmp = val.split(",");
   var button1 = $(
-    '<button id="button_first" class="btn btn-lg btn-primary">' +
-      tmp[0] +
-      "</button>"
+    '<button class="btn btn-lg btn-primary">' + tmp[0] + "</button>"
   );
   cubes.append(button1);
   button1.on("click", buttonValueClicked);
   if (tmp[1]) {
     var button2 = $(
-      '<button id="button_second" class="btn btn-lg btn-primary">' +
-        tmp[1] +
-        "</button>"
+      '<button class="btn btn-lg btn-primary">' + tmp[1] + "</button>"
     );
     cubes.append(button2);
     button2.on("click", buttonValueClicked);
@@ -129,12 +125,15 @@ for (var i = 0; i < 15; i++) {
   }
 }
 var g_selected_amount;
+var g_selected_amount_button;
 function buttonValueClicked(e) {
   var button = e.target;
   var val = button.innerHTML;
   console.log("dice value:", val);
   g_selected_amount = val;
-  $(button).remove();
+  g_selected_amount_button = button;
+  $("#cubes buttons").css("background-color", "");
+  $(button).css("background-color", "#8888ff");
 }
 
 function resize() {
@@ -150,6 +149,7 @@ addStars();
 make_dotted_borders();
 addBonuses();
 resize();
+add_dice_buttons();
 
 function getTd(x, y) {
   var index = y * 15 + x;
@@ -172,8 +172,7 @@ function addStartPoints() {
   start_points.forEach(function (a, i) {
     if (g_selected_amount != 0) {
       var td = $(getTd(a[0], a[1]));
-      td.css("background-color", "green");
-      td.css("cursor", "pointer");
+      td.addClass("start");
       td.on("click", startSelected);
       td.data("i", i);
     }
@@ -182,13 +181,16 @@ function addStartPoints() {
 
 var g_selected_start;
 function startSelected(e) {
-  var td = $(e.target);
-  td.css("background-color", "#88ff88");
+  if (e.target.tagName === "I") var td = $(e.target.parentElement);
+  else var td = $(e.target);
+  $(".start").removeClass("active");
+  td.addClass("active");
   var start = td.data("i");
   g_selected_start = start;
   console.log(g_selected_start);
   $("#direction").show(0);
 }
+
 function addStars() {
   stars_small.forEach(function (a) {
     if (a[2]) addContent(a[0], a[1], "⭐");
@@ -237,13 +239,16 @@ function changeCellRightBorder(x, y) {
 function move(e) {
   var button = $(e.target);
   var direction = button.attr("data-direction");
-  move2(g_selected_start, direction, g_selected_value);
+  move2(g_selected_start, direction, g_selected_amount);
 }
 
 function move2(start, direction, amount) {
   var pos = start_points[start];
   var td = $(getTd(pos[0], pos[1]));
-  td.css("background-color", "silver");
+  td.off("click");
+  td.removeClass("active");
+  td.removeClass("start");
+  td.addClass("visited");
   var mx, my;
   switch (direction) {
     case "0":
@@ -271,11 +276,29 @@ function move2(start, direction, amount) {
     pos[0] += mx;
     pos[1] += my;
     td = $(getTd(pos[0], pos[1]));
-    td.css("background-color", "silver");
+    td.addClass("visited");
     checkContents(td);
   }
-  td.css("background-color", "green");
+
+  td.addClass("start");
+  td.on("click", startSelected);
+  td.data("i", start);
+
+  $(g_selected_amount_button).remove();
+  $("#direction").hide(0);
+  var has_amount_buttons = $("#cubes button").length;
+  if (!has_amount_buttons) {
+    add_dice_buttons();
+  }
 }
+
+function add_dice_buttons() {
+  var button1 = $(
+    '<button class="btn btn-lg btn-primary" onclick="throwDice()">Throw dice!</button>'
+  );
+  $("#cubes").append(button1);
+}
+
 var quadrant_enabled = [0, 0, 0, 0];
 function checkContents(td) {
   if (td[0].innerHTML === "🙂") {
@@ -284,6 +307,19 @@ function checkContents(td) {
     smiley_done[quadrant]++;
     if (smiley_done[quadrant] === 3) quadrant_enabled[quadrant] = 1;
     else if (smiley_done[quadrant] > 3) quadrant_enabled[quadrant] = 2;
+  } else if (td[0].innerHTML.trim().startsWith("<i")) {
+    var i = td.find("i");
+    if (!i.data("used")) {
+      i.data("used", true);
+      var new_dice_ammount = i[0].innerHTML;
+      var button1 = $(
+        '<button class="btn btn-lg btn-primary">' +
+          new_dice_ammount +
+          "</button>"
+      );
+      $("#cubes").append(button1);
+      button1.on("click", buttonValueClicked);
+    }
   }
 }
 

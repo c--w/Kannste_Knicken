@@ -35,3 +35,16 @@ i {
   color: black;
   background-color: white;
 }
+
+.visited {
+  background-color: silver;
+}
+
+.start {
+  background-color: green;
+  cursor: pointer;
+}
+
+.start.active {
+  background-color: #88ff88;
+}
