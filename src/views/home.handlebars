@@ -26,8 +26,17 @@
       <tbody></tbody>
     </table>
   </div>
+  <div id="cubes">
+    <button class="btn btn-lg btn-primary" onclick="throwDice()">Throw dice!</button>
+  </div>
+  <div id="direction"
+    style="display: none; text-align: center; background: white; padding: 10px; position: fixed; top: 50%; left: 50%; transform: translateX(-50%) translateY(-50%);">
+    <button data-direction="1" class="btn btn-lg btn-primary" onclick="move(event);">Up</button><br>
+    <button data-direction="2" class="btn btn-lg btn-primary" onclick="move(event);">Left</button>
+    <button data-direction="0" class="btn btn-lg btn-primary" onclick="move(event);">Right</button><br>
+    <button data-direction="3" class="btn btn-lg btn-primary" onclick="move(event);">Down</button>
+  </div>
+  <script src="/js/game.js"></script>
 </body>
-
-<script src="/js/game.js"></script>
 
 </html>

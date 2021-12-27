@@ -67,6 +67,56 @@ var stars_big = [
 
 var smiley_done = [0, 0, 0, 0];
 
+function throwDice() {
+  var faces_black = [4, 4, 5, [2, 2], [2, 3], [2, 3]];
+  var faces_white = [3, [1, 1], [1, 1], [1, 2], [1, 2], [1, 2]];
+  var b = Math.floor(Math.random() * 6);
+  var w = Math.floor(Math.random() * 6);
+  var black = faces_black[b];
+  var white = faces_white[w];
+  var cubes = $("#cubes");
+  cubes.empty();
+  var button1 = $(
+    '<button id="button_black" class="btn btn-lg black-button">' +
+      black +
+      "</button>"
+  );
+  var button2 = $(
+    '<button id="button_white" class="btn btn-lg white-button">' +
+      white +
+      "</button>"
+  );
+  cubes.append(button1);
+  cubes.append(button2);
+  button1.on("click", cubesButtonClicked);
+  button2.on("click", cubesButtonClicked);
+}
+
+function cubesButtonClicked(e) {
+  var button = e.target;
+  var val = button.innerHTML;
+  console.log("dice:", val);
+  var cubes = $("#cubes");
+  cubes.empty();
+  var tmp = val.split(",");
+  var button1 = $(
+    '<button id="button_first" class="btn btn-lg btn-primary">' +
+      tmp[0] +
+      "</button>"
+  );
+  cubes.append(button1);
+  button1.on("click", buttonValueClicked);
+  if (tmp[1]) {
+    var button2 = $(
+      '<button id="button_second" class="btn btn-lg btn-primary">' +
+        tmp[1] +
+        "</button>"
+    );
+    cubes.append(button2);
+    button2.on("click", buttonValueClicked);
+  }
+}
+
 var tbody = $(".grid tbody");
 for (var i = 0; i < 15; i++) {
   var tr = $("<tr>");
@@ -78,16 +128,28 @@ for (var i = 0; i < 15; i++) {
     tr.append(td);
   }
 }
+var g_selected_amount;
+function buttonValueClicked(e) {
+  var button = e.target;
+  var val = button.innerHTML;
+  console.log("dice value:", val);
+  g_selected_amount = val;
+  $(button).remove();
+}
 
-var width = $(".grid td")[0].clientWidth;
-$(".grid td").css("height", width + "px");
+function resize() {
+  var width = $(".grid td")[0].clientWidth;
+  $(".grid td").css("height", width + "px");
+  var height = $(".grid i")[0].clientHeight;
+  $(".grid i").css("width", height + "px");
+}
+$(window).resize(resize);
 addSmilies();
 addStartPoints();
 addStars();
 make_dotted_borders();
 addBonuses();
-var width = $(".grid i")[0].clientHeight;
-$(".grid i").css("width", width + "px");
+resize();
 
 function getTd(x, y) {
   var index = y * 15 + x;
@@ -108,16 +170,24 @@ function addSmilies() {
 
 function addStartPoints() {
   start_points.forEach(function (a, i) {
-    var td = $(getTd(a[0], a[1]));
-    td.css("background-color", "green");
-    td.css("cursor", "pointer");
-    td.on("click", startSelected);
-    td.data("i", i);
+    if (g_selected_amount != 0) {
+      var td = $(getTd(a[0], a[1]));
+      td.css("background-color", "green");
+      td.css("cursor", "pointer");
+      td.on("click", startSelected);
+      td.data("i", i);
+    }
   });
 }
 
+var g_selected_start;
 function startSelected(e) {
-  console.log(e);
+  var td = $(e.target);
+  td.css("background-color", "#88ff88");
+  var start = td.data("i");
+  g_selected_start = start;
+  console.log(g_selected_start);
+  $("#direction").show(0);
 }
 function addStars() {
   stars_small.forEach(function (a) {
@@ -164,25 +234,31 @@ function changeCellRightBorder(x, y) {
   $(td).css("border-right", "2px dotted gold");
 }
 
-function move(start, direction, amount) {
+function move(e) {
+  var button = $(e.target);
+  var direction = button.attr("data-direction");
+  move2(g_selected_start, direction, g_selected_value);
+}
+
+function move2(start, direction, amount) {
   var pos = start_points[start];
   var td = $(getTd(pos[0], pos[1]));
   td.css("background-color", "silver");
   var mx, my;
   switch (direction) {
-    case 0:
+    case "0":
       mx = 1;
       my = 0;
       break;
-    case 1:
+    case "1":
       mx = 0;
       my = -1;
       break;
-    case 2:
+    case "2":
       mx = -1;
       my = 0;
       break;
-    case 3:
+    case "3":
       mx = 0;
       my = 1;
       break;
@@ -191,7 +267,7 @@ function move(start, direction, amount) {
       break;
   }
   var td;
-  for (var i = 1; i < amount; i++) {
+  for (var i = 1; i <= amount; i++) {
     pos[0] += mx;
     pos[1] += my;
     td = $(getTd(pos[0], pos[1]));
