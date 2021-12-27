@@ -66,6 +66,7 @@ var stars_big = [
 ];
 
 var smiley_done = [0, 0, 0, 0];
+var g_stars = 0;
 
 function throwDice() {
   var faces_black = [4, 4, 5, [2, 2], [2, 3], [2, 3]];
@@ -307,6 +308,9 @@ function checkContents(td) {
     smiley_done[quadrant]++;
     if (smiley_done[quadrant] === 3) quadrant_enabled[quadrant] = 1;
     else if (smiley_done[quadrant] > 3) quadrant_enabled[quadrant] = 2;
+  } else if (td[0].innerHTML === "⭐") {
+    g_stars++;
+    td[0].innerHTML = "☆";
   } else if (td[0].innerHTML.trim().startsWith("<i")) {
     var i = td.find("i");
     if (!i.data("used")) {
