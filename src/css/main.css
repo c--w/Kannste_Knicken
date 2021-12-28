@@ -78,3 +78,17 @@ td {
   top: 0;
   right: 0;
 }
+.bonus-mark-black {
+  position: absolute;
+  border-radius: 50%;
+  background-color: black;
+  color: white;
+  z-index: 1;
+}
+.bonus-mark-white {
+  position: absolute;
+  border-radius: 50%;
+  background-color: white;
+  color: black;
+  z-index: 1;
+}

@@ -81,6 +81,63 @@ var folds_big = [
 
 var smiley_done = [0, 0, 0, 0];
 var g_stars = 0;
+var g_has_black_bonus;
+var g_has_white_bonus;
+var g_has_white_cube;
+var g_has_black_cube;
+
+function cubesButtonClicked(e) {
+  var button = e.target;
+  var val = button.innerHTML;
+  if ($(button).hasClass("black-button")) {
+    if (g_has_black_bonus) var add_bonus = true;
+  } else {
+    if (g_has_white_bonus) var add_bonus = true;
+  }
+  console.log("dice:", val);
+  var cubes = $("#cubes");
+  cubes.empty();
+  var tmp = val.split(",");
+  var button1 = $(
+    '<button class="btn btn-lg btn-secondary">' + tmp[0] + "</button>"
+  );
+  cubes.append(button1);
+  button1.on("click", buttonValueClicked);
+  if (tmp[1]) {
+    var button2 = $(
+      '<button class="btn btn-lg btn-secondary">' + tmp[1] + "</button>"
+    );
+    cubes.append(button2);
+    button2.on("click", buttonValueClicked);
+  }
+  if (add_bonus) {
+    var a = $(
+      '<a class="btn btn-lg btn-secondary bonus-1" onclick="addBonus(event)">+1</button>'
+    );
+    cubes.append($("<br>"));
+    cubes.append(a);
+  }
+  defaultButtonValueClicked();
+}
+
+function buttonValueClicked(e) {
+  var button = e.target;
+  buttonValueClicked2(button);
+}
+function buttonValueClicked2(button) {
+  var val = button.innerHTML;
+  console.log("dice value:", val);
+  g_selected_amount = val;
+  g_selected_amount_button = button;
+  $("#cubes button").removeClass("btn-success");
+  $(button).addClass("btn-success");
+}
+function resize() {
+  var width = $(".grid td")[0].clientWidth;
+  $(".grid td").css("height", width + "px");
+  var height = $(".grid .bonus")[0].clientHeight;
+  $(".grid .bonus").css("width", height + "px");
+}
 
 function throwDice() {
   var faces_black = [4, 4, 5, [2, 2], [2, 3], [2, 3]];
@@ -107,26 +164,12 @@ function throwDice() {
   button2.on("click", cubesButtonClicked);
 }
 
-function cubesButtonClicked(e) {
-  var button = e.target;
-  var val = button.innerHTML;
-  console.log("dice:", val);
-  var cubes = $("#cubes");
-  cubes.empty();
-  var tmp = val.split(",");
-  var button1 = $(
-    '<button class="btn btn-lg btn-secondary">' + tmp[0] + "</button>"
-  );
-  cubes.append(button1);
-  button1.on("click", buttonValueClicked);
-  if (tmp[1]) {
-    var button2 = $(
-      '<button class="btn btn-lg btn-secondary">' + tmp[1] + "</button>"
-    );
-    cubes.append(button2);
-    button2.on("click", buttonValueClicked);
-  }
-  defaultButtonValueClicked();
+function addBonus(event) {
+  var a = $(event.target);
+  a.remove();
+  var button = $("#cubes button.btn-success")[0];
+  g_selected_amount++;
+  button.innerHTML = Number(button.innerHTML) + 1;
 }
 
 function fold(event) {
@@ -143,21 +186,29 @@ function fold2(quadrant, type) {
       var pos = [0, 0];
       var mx = 1;
       var my = 1;
+      addWhiteCubeMark(type);
+      g_has_white_cube = true;
       break;
     case 1:
       var pos = [14, 0];
       var mx = -1;
       var my = 1;
+      g_has_white_bonus = true;
+      addWhiteBonusMark(type);
       break;
     case 2:
       var pos = [0, 14];
       var mx = 1;
       var my = -1;
+      g_has_black_bonus = true;
+      addBlackBonusMark(type);
       break;
     case 3:
       var pos = [14, 14];
       var mx = -1;
       var my = -1;
+      addBlackCubeMark(type);
+      g_has_black_cube = true;
       break;
 
     default:
@@ -227,16 +278,6 @@ function addFolding(x, y, val) {
   $(td).append(button);
 }
 
-function showFold(quadrant, val) {
-  if (val == 1) {
-    var pos = folds_small[quadrant];
-  } else {
-    var pos = folds_big[quadrant];
-  }
-  var td = $(getTd(pos[0], pos[1]));
-  td.find("button").show();
-}
-
 var tbody = $(".grid tbody");
 for (var i = 0; i < 15; i++) {
   var tr = $("<tr>");
@@ -287,24 +328,6 @@ function defaultButtonValueClicked() {
   buttonValueClicked2(button);
 }
 
-function buttonValueClicked(e) {
-  var button = e.target;
-  buttonValueClicked2(button);
-}
-function buttonValueClicked2(button) {
-  var val = button.innerHTML;
-  console.log("dice value:", val);
-  g_selected_amount = val;
-  g_selected_amount_button = button;
-  $("#cubes button").removeClass("btn-success");
-  $(button).addClass("btn-success");
-}
-function resize() {
-  var width = $(".grid td")[0].clientWidth;
-  $(".grid td").css("height", width + "px");
-  var height = $(".grid .bonus")[0].clientHeight;
-  $(".grid .bonus").css("width", height + "px");
-}
 $(window).resize(resize);
 addSmilies();
 addStartPoints();
@@ -312,32 +335,6 @@ addStars();
 addBonuses();
 resize();
 add_dice_buttons();
-
-function getTd(x, y) {
-  var index = y * 15 + x;
-  var td = $(".grid td")[index];
-  return td;
-}
-
-function addContent(x, y, text, klass) {
-  var td = getTd(x, y);
-  var span = $("<span>" + text + "</span>");
-  if (klass) span.addClass(klass);
-  $(td).append(span);
-}
-
-function addSmilies() {
-  smilies.forEach(function (a) {
-    addContent(a[0], a[1], "🙂");
-  });
-}
-
-function addStartPoints() {
-  start_points.forEach(function (a, i) {
-    var td = $(getTd(a[0], a[1]));
-    makeStart(td, i);
-  });
-}
 
 function makeStart(td, quadrant) {
   td.addClass("start");
@@ -356,18 +353,6 @@ function startSelected(e) {
   g_selected_start = start;
   console.log(g_selected_start);
   $("#direction").show(0);
-}
-
-function addStars() {
-  stars_small.forEach(function (a) {
-    if (a[2]) addContent(a[0], a[1], "⭐");
-  });
-}
-
-function addBonuses() {
-  bonuses.forEach(function (a) {
-    addContent(a[0], a[1], a[2], "bonus");
-  });
 }
 
 function move(e) {
@@ -536,4 +521,93 @@ function getMxMy(direction) {
     my = 1;
   }
   return { mx: mx, my: my };
+}
+
+function addBlackBonusMark(type) {
+  if (type == 1) return;
+  var td = $(getTd(5, 9));
+  var div = $("<div class='bonus-mark-black'>+1</div>");
+  td.append(div);
+  var height = div[0].clientHeight;
+  div.css("width", height + "px");
+  div.css("top", "-" + height / 2 + "px");
+  div.css("right", "-" + height / 2 + "px");
+}
+function addWhiteBonusMark(type) {
+  if (type == 1) return;
+  var td = $(getTd(9, 5));
+  var div = $("<div class='bonus-mark-white'>+1</div>");
+  td.append(div);
+  var height = div[0].clientHeight;
+  div.css("width", height + "px");
+  div.css("bottom", "-" + height / 2 + "px");
+  div.css("left", "-" + height / 2 + "px");
+}
+function addWhiteCubeMark(type) {
+  if (type == 1) return;
+  var td = $(getTd(5, 5));
+  var div = $("<div class='bonus-mark-white'>🎲</div>");
+  td.append(div);
+  var height = div[0].clientHeight;
+  div.css("width", height + "px");
+  div.css("bottom", "-" + height / 2 + "px");
+  div.css("right", "-" + height / 2 + "px");
+}
+function addBlackCubeMark(type) {
+  if (type == 1) return;
+  var td = $(getTd(9, 9));
+  var div = $("<div class='bonus-mark-black'>🎲</div>");
+  td.append(div);
+  var height = div[0].clientHeight;
+  div.css("width", height + "px");
+  div.css("top", "-" + height / 2 + "px");
+  div.css("left", "-" + height / 2 + "px");
+}
+
+function showFold(quadrant, val) {
+  if (val == 1) {
+    var pos = folds_small[quadrant];
+  } else {
+    var pos = folds_big[quadrant];
+  }
+  var td = $(getTd(pos[0], pos[1]));
+  td.find("button").show();
+}
+
+function getTd(x, y) {
+  var index = y * 15 + x;
+  var td = $(".grid td")[index];
+  return td;
+}
+
+function addContent(x, y, text, klass) {
+  var td = getTd(x, y);
+  var span = $("<span>" + text + "</span>");
+  if (klass) span.addClass(klass);
+  $(td).append(span);
+}
+
+function addSmilies() {
+  smilies.forEach(function (a) {
+    addContent(a[0], a[1], "🙂");
+  });
+}
+
+function addStartPoints() {
+  start_points.forEach(function (a, i) {
+    var td = $(getTd(a[0], a[1]));
+    makeStart(td, i);
+  });
+}
+
+function addStars() {
+  stars_small.forEach(function (a) {
+    if (a[2]) addContent(a[0], a[1], "⭐");
+  });
+}
+
+function addBonuses() {
+  bonuses.forEach(function (a) {
+    addContent(a[0], a[1], a[2], "bonus");
+  });
 }
