@@ -39,10 +39,10 @@ var start_points_big = [
 ];
 
 var stars_small = [
-  [3, 2, 1],
-  [11, 1, 1],
-  [3, 13, 1],
-  [13, 11, 1],
+  [3, 2, 0],
+  [11, 1, 0],
+  [3, 13, 0],
+  [13, 11, 0],
   [7, 7, 1]
 ];
 
@@ -403,6 +403,9 @@ function move2(start, direction, amount) {
   } else {
     defaultButtonValueClicked();
   }
+  if (g_stars == 5) {
+    checkStarsConnected();
+  }
 }
 
 function add_dice_buttons() {
@@ -428,9 +431,6 @@ function checkContents(td) {
   } else if (td[0].innerHTML.includes("⭐")) {
     g_stars++;
     td.find("span")[0].innerHTML = "☆";
-    if (g_stars == 5) {
-      checkStarsConnected();
-    }
   } else if (td.find(".bonus").length) {
     var bonus = td.find(".bonus");
     if (!bonus.data("used")) {
@@ -488,12 +488,12 @@ function checkStarsConnected2(pos, direction, stars, count) {
     pos[0] += d1.mx;
     pos[1] += d1.my;
   } else if (isOnPath(pos[0] + d.mx, pos[1] + d.my)) {
+    pos[0] += d.mx;
+    pos[1] += d.my;
+  } else if (isOnPath(pos[0] + d2.mx, pos[1] + d2.my)) {
     direction = new_dir2;
     pos[0] += d2.mx;
     pos[1] += d2.my;
-  } else if (isOnPath(pos[0] + d2.mx, pos[1] + d2.my)) {
-    pos[0] += d.mx;
-    pos[1] += d.my;
   } else {
     direction++;
     direction %= 4;
