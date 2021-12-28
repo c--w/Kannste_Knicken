@@ -38,6 +38,22 @@ var start_points_big = [
   [9, 10]
 ];
 
+var stars_small = [
+  [3, 2, 1],
+  [11, 1, 1],
+  [3, 13, 1],
+  [13, 11, 1],
+  [7, 7, 1]
+];
+
+var stars_big = [
+  [5, 4, 0],
+  [9, 3, 0],
+  [5, 11, 0],
+  [11, 9, 0],
+  [7, 7, 1]
+];
+
 var bonuses = [
   [4, 5, 2],
   [9, 4, 1],
@@ -47,22 +63,6 @@ var bonuses = [
   [10, 9, 3],
   [5, 10, 1],
   [7, 11, 1]
-];
-
-var stars_small = [
-  [3, 2, 0],
-  [12, 1, 0],
-  [3, 13, 0],
-  [13, 11, 0],
-  [7, 7, 1]
-];
-
-var stars_big = [
-  [5, 4, 0],
-  [10, 3, 0],
-  [5, 11, 0],
-  [11, 9, 0],
-  [7, 7, 1]
 ];
 
 var folds_small = [
@@ -126,13 +126,14 @@ function cubesButtonClicked(e) {
     cubes.append(button2);
     button2.on("click", buttonValueClicked);
   }
+  defaultButtonValueClicked();
 }
 
 function fold(event) {
   var button = $(event.target);
   var quadrant = button.data("quadrant");
-  $("button[quadrant=" + quadrant + "]").remove();
   var type = button.data("type");
+  $("button[quadrant=" + quadrant + "]").remove();
   fold2(quadrant, type);
 }
 
@@ -179,7 +180,7 @@ function fold2(quadrant, type) {
       if ((i - pos[1]) * my + (j - pos[0]) * mx < max) {
         td.css("background-color", "transparent");
       } else {
-        td.css("background-color", "");
+        td.removeClass("visited");
       }
       td.find("span").remove();
     }
@@ -281,16 +282,23 @@ for (var i = 0; i < 15; i++) {
 }
 var g_selected_amount = 0;
 var g_selected_amount_button;
+function defaultButtonValueClicked() {
+  var button = $("#cubes button")[0];
+  buttonValueClicked2(button);
+}
+
 function buttonValueClicked(e) {
   var button = e.target;
+  buttonValueClicked2(button);
+}
+function buttonValueClicked2(button) {
   var val = button.innerHTML;
   console.log("dice value:", val);
   g_selected_amount = val;
   g_selected_amount_button = button;
-  $("#cubes buttons").removeClass("btn-success");
+  $("#cubes button").removeClass("btn-success");
   $(button).addClass("btn-success");
 }
-
 function resize() {
   var width = $(".grid td")[0].clientWidth;
   $(".grid td").css("height", width + "px");
@@ -392,6 +400,8 @@ function move2(start, direction, amount) {
   var has_amount_buttons = $("#cubes button").length;
   if (!has_amount_buttons) {
     add_dice_buttons();
+  } else {
+    defaultButtonValueClicked();
   }
 }
 
@@ -425,9 +435,9 @@ function checkContents(td) {
     var bonus = td.find(".bonus");
     if (!bonus.data("used")) {
       bonus.data("used", true);
-      var new_dice_ammount = i[0].innerHTML;
+      var new_dice_ammount = bonus[0].innerHTML;
       var button1 = $(
-        '<button class="btn btn-lg btn-default">' +
+        '<button class="btn btn-lg btn-secondary">' +
           new_dice_ammount +
           "</button>"
       );
@@ -445,10 +455,12 @@ function checkStarsConnected() {
   checkStarsConnected2([start[0], start[1]], direction, stars, count);
 }
 function checkStarsConnected2(pos, direction, stars, count) {
-  console.log(pos, direction, count);
+  //console.log(pos, direction, count);
+
   if (count > 225) return;
   var td = getTd(pos[0], pos[1]);
-  if (td.innerHTML.includes("😃")) {
+  $(td).removeClass("start");
+  if (td.innerHTML.includes("☆")) {
     if (
       !stars.find(function (star) {
         if (star[0] == pos[0] && star[1] == pos[1]) return true;
@@ -465,30 +477,32 @@ function checkStarsConnected2(pos, direction, stars, count) {
   }
 
   var d = getMxMy(direction);
-  if (isOnPath(pos[0] + d.mx, pos[1] + d.my)) {
+  var new_dir1 = direction + 1;
+  new_dir1 %= 4;
+  var d1 = getMxMy(new_dir1);
+  var new_dir2 = direction - 1;
+  if (new_dir2 < 0) new_dir2 += 4;
+  var d2 = getMxMy(new_dir2);
+  if (isOnPath(pos[0] + d1.mx, pos[1] + d1.my)) {
+    direction = new_dir1;
+    pos[0] += d1.mx;
+    pos[1] += d1.my;
+  } else if (isOnPath(pos[0] + d.mx, pos[1] + d.my)) {
+    direction = new_dir2;
+    pos[0] += d2.mx;
+    pos[1] += d2.my;
+  } else if (isOnPath(pos[0] + d2.mx, pos[1] + d2.my)) {
     pos[0] += d.mx;
     pos[1] += d.my;
-    count++;
-    setTimeout(checkStarsConnected2, 0, pos, direction, stars, count);
   } else {
-    var new_dir1 = direction + 1;
-    new_dir1 %= 3;
-    var d1 = getMxMy(new_dir1);
-    var new_dir2 = direction - 1;
-    if (new_dir2 < 0) new_dir2 += 4;
-    var d2 = getMxMy(new_dir2);
-    if (isOnPath(pos[0] + d1.mx, pos[1] + d1.my)) {
-      direction = new_dir1;
-    } else if (isOnPath(pos[0] + d2.mx, pos[1] + d2.my)) {
-      direction = new_dir2;
-    } else {
-      direction++;
-      direction %= 3;
-    }
-
-    count++;
-    setTimeout(checkStarsConnected2, 0, pos, direction, stars, count);
+    direction++;
+    direction %= 4;
   }
+  var td = getTd(pos[0], pos[1]);
+  $(td).addClass("start");
+
+  count++;
+  setTimeout(checkStarsConnected2, 10, pos, direction, stars, count);
 }
 function isOnPath(x, y) {
   var td = $(getTd(x, y));
