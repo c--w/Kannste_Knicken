@@ -10,12 +10,20 @@ table {
 td {
   width: 6.6666666666666666%;
   position: relative;
-  background-color: gold;
+  background-color: #ffd700;
   border: 1px solid gray;
   text-align: center;
 }
-i {
-  font-style: normal;
+
+.big-corner {
+  background-color: #eec700;
+}
+
+.small-corner {
+  background-color: #ddb700;
+}
+
+.bonus {
   border: 1px solid gray;
   display: inline-block;
 }

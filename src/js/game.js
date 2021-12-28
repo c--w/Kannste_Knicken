@@ -115,13 +115,13 @@ function cubesButtonClicked(e) {
   cubes.empty();
   var tmp = val.split(",");
   var button1 = $(
-    '<button class="btn btn-lg btn-primary">' + tmp[0] + "</button>"
+    '<button class="btn btn-lg btn-secondary">' + tmp[0] + "</button>"
   );
   cubes.append(button1);
   button1.on("click", buttonValueClicked);
   if (tmp[1]) {
     var button2 = $(
-      '<button class="btn btn-lg btn-primary">' + tmp[1] + "</button>"
+      '<button class="btn btn-lg btn-secondary">' + tmp[1] + "</button>"
     );
     cubes.append(button2);
     button2.on("click", buttonValueClicked);
@@ -261,9 +261,25 @@ for (var i = 0; i < 15; i++) {
     ) {
       addFolding(j, i, 2);
     }
+    if (
+      (j <= 3 && i <= 3) ||
+      (j >= 11 && i <= 3) ||
+      (j <= 3 && i >= 11) ||
+      (j >= 11 && i >= 11)
+    ) {
+      td.addClass("small-corner");
+    }
+    if (
+      (j <= 5 && i <= 5) ||
+      (j >= 9 && i <= 5) ||
+      (j <= 5 && i >= 9) ||
+      (j >= 9 && i >= 9)
+    ) {
+      td.addClass("big-corner");
+    }
   }
 }
-var g_selected_amount;
+var g_selected_amount = 0;
 var g_selected_amount_button;
 function buttonValueClicked(e) {
   var button = e.target;
@@ -271,21 +287,20 @@ function buttonValueClicked(e) {
   console.log("dice value:", val);
   g_selected_amount = val;
   g_selected_amount_button = button;
-  $("#cubes buttons").css("background-color", "");
-  $(button).css("background-color", "#8888ff");
+  $("#cubes buttons").removeClass("btn-success");
+  $(button).addClass("btn-success");
 }
 
 function resize() {
   var width = $(".grid td")[0].clientWidth;
   $(".grid td").css("height", width + "px");
-  var height = $(".grid i")[0].clientHeight;
-  $(".grid i").css("width", height + "px");
+  var height = $(".grid .bonus")[0].clientHeight;
+  $(".grid .bonus").css("width", height + "px");
 }
 $(window).resize(resize);
 addSmilies();
 addStartPoints();
 addStars();
-make_dotted_borders();
 addBonuses();
 resize();
 add_dice_buttons();
@@ -296,9 +311,11 @@ function getTd(x, y) {
   return td;
 }
 
-function addContent(x, y, text) {
+function addContent(x, y, text, klass) {
   var td = getTd(x, y);
-  $(td).append($("<span>" + text + "</span>"));
+  var span = $("<span>" + text + "</span>");
+  if (klass) span.addClass(klass);
+  $(td).append(span);
 }
 
 function addSmilies() {
@@ -309,10 +326,8 @@ function addSmilies() {
 
 function addStartPoints() {
   start_points.forEach(function (a, i) {
-    if (g_selected_amount != 0) {
-      var td = $(getTd(a[0], a[1]));
-      makeStart(td, i);
-    }
+    var td = $(getTd(a[0], a[1]));
+    makeStart(td, i);
   });
 }
 
@@ -324,7 +339,8 @@ function makeStart(td, quadrant) {
 
 var g_selected_start;
 function startSelected(e) {
-  if (e.target.tagName === "I") var td = $(e.target.parentElement);
+  if (g_selected_amount == 0) return;
+  if (e.target.tagName !== "TD") var td = $(e.target.parentElement);
   else var td = $(e.target);
   $(".start").removeClass("active");
   td.addClass("active");
@@ -342,41 +358,8 @@ function addStars() {
 
 function addBonuses() {
   bonuses.forEach(function (a) {
-    addContent(a[0], a[1], "<i>" + a[2] + "</i>");
+    addContent(a[0], a[1], a[2], "bonus");
   });
-}
-
-function make_dotted_borders() {
-  for (var i = 0; i < 4; i++) {
-    changeCellTopBorder(i, 4);
-    changeCellTopBorder(i, 11);
-    changeCellTopBorder(i + 11, 4);
-    changeCellTopBorder(i + 11, 11);
-    changeCellRightBorder(3, i);
-    changeCellRightBorder(10, i);
-    changeCellRightBorder(3, i + 11);
-    changeCellRightBorder(10, i + 11);
-  }
-  for (var i = 0; i < 6; i++) {
-    changeCellTopBorder(i, 6);
-    changeCellTopBorder(i, 9);
-    changeCellTopBorder(i + 9, 6);
-    changeCellTopBorder(i + 9, 9);
-    changeCellRightBorder(5, i);
-    changeCellRightBorder(8, i);
-    changeCellRightBorder(5, i + 9);
-    changeCellRightBorder(8, i + 9);
-  }
-}
-
-function changeCellTopBorder(x, y) {
-  var td = getTd(x, y);
-  $(td).css("border-top", "2px dotted gold");
-}
-
-function changeCellRightBorder(x, y) {
-  var td = getTd(x, y);
-  $(td).css("border-right", "2px dotted gold");
 }
 
 function move(e) {
@@ -392,32 +375,11 @@ function move2(start, direction, amount) {
   td.removeClass("active");
   td.removeClass("start");
   td.addClass("visited");
-  var mx, my;
-  switch (direction) {
-    case "0":
-      mx = 1;
-      my = 0;
-      break;
-    case "1":
-      mx = 0;
-      my = -1;
-      break;
-    case "2":
-      mx = -1;
-      my = 0;
-      break;
-    case "3":
-      mx = 0;
-      my = 1;
-      break;
-
-    default:
-      break;
-  }
+  var d = getMxMy(direction);
   var td;
   for (var i = 1; i <= amount; i++) {
-    pos[0] += mx;
-    pos[1] += my;
+    pos[0] += d.mx;
+    pos[1] += d.my;
     td = $(getTd(pos[0], pos[1]));
     td.addClass("visited");
     checkContents(td);
@@ -425,6 +387,7 @@ function move2(start, direction, amount) {
   makeStart(td, start);
 
   $(g_selected_amount_button).remove();
+  g_selected_amount = 0;
   $("#direction").hide(0);
   var has_amount_buttons = $("#cubes button").length;
   if (!has_amount_buttons) {
@@ -455,13 +418,16 @@ function checkContents(td) {
   } else if (td[0].innerHTML.includes("⭐")) {
     g_stars++;
     td.find("span")[0].innerHTML = "☆";
-  } else if (td.find("i").length) {
-    var i = td.find("i");
-    if (!i.data("used")) {
-      i.data("used", true);
+    if (g_stars == 5) {
+      checkStarsConnected();
+    }
+  } else if (td.find(".bonus").length) {
+    var bonus = td.find(".bonus");
+    if (!bonus.data("used")) {
+      bonus.data("used", true);
       var new_dice_ammount = i[0].innerHTML;
       var button1 = $(
-        '<button class="btn btn-lg btn-primary">' +
+        '<button class="btn btn-lg btn-default">' +
           new_dice_ammount +
           "</button>"
       );
@@ -471,9 +437,89 @@ function checkContents(td) {
   }
 }
 
+function checkStarsConnected() {
+  var start = stars_small[4];
+  var direction = 0;
+  var stars = [];
+  var count = 0;
+  checkStarsConnected2([start[0], start[1]], direction, stars, count);
+}
+function checkStarsConnected2(pos, direction, stars, count) {
+  console.log(pos, direction, count);
+  if (count > 225) return;
+  var td = getTd(pos[0], pos[1]);
+  if (td.innerHTML.includes("😃")) {
+    if (
+      !stars.find(function (star) {
+        if (star[0] == pos[0] && star[1] == pos[1]) return true;
+        return false;
+      })
+    ) {
+      stars.push([pos[0], pos[1]]);
+      if (stars.length == 5) {
+        console.log("WIN!!");
+        window.alert("WIN!");
+        return;
+      }
+    }
+  }
+
+  var d = getMxMy(direction);
+  if (isOnPath(pos[0] + d.mx, pos[1] + d.my)) {
+    pos[0] += d.mx;
+    pos[1] += d.my;
+    count++;
+    setTimeout(checkStarsConnected2, 0, pos, direction, stars, count);
+  } else {
+    var new_dir1 = direction + 1;
+    new_dir1 %= 3;
+    var d1 = getMxMy(new_dir1);
+    var new_dir2 = direction - 1;
+    if (new_dir2 < 0) new_dir2 += 4;
+    var d2 = getMxMy(new_dir2);
+    if (isOnPath(pos[0] + d1.mx, pos[1] + d1.my)) {
+      direction = new_dir1;
+    } else if (isOnPath(pos[0] + d2.mx, pos[1] + d2.my)) {
+      direction = new_dir2;
+    } else {
+      direction++;
+      direction %= 3;
+    }
+
+    count++;
+    setTimeout(checkStarsConnected2, 0, pos, direction, stars, count);
+  }
+}
+function isOnPath(x, y) {
+  var td = $(getTd(x, y));
+  var bg_color = td.css("background-color");
+  if (bg_color == "rgb(192, 192, 192)" || bg_color == "rgb(0, 128, 0)")
+    return true;
+  return false;
+}
 function getQuadrant(x, y) {
   if (x < 6 && y < 6) return 0;
   if (x > 8 && y < 6) return 1;
   if (x < 6 && y > 8) return 2;
   if (x > 8 && y > 8) return 3;
+}
+function getMxMy(direction) {
+  var mx, my;
+  if (direction == 0) {
+    mx = 1;
+    my = 0;
+  }
+  if (direction == 1) {
+    mx = 0;
+    my = -1;
+  }
+  if (direction == 2) {
+    mx = -1;
+    my = 0;
+  }
+  if (direction == 3) {
+    mx = 0;
+    my = 1;
+  }
+  return { mx: mx, my: my };
 }
